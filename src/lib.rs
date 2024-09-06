@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Default, PartialEq)]
 pub struct Conway {
     // what goes here?
     pub cells: Vec<bool>,
@@ -13,8 +13,40 @@ impl Conway {
         self.cells[index]
     }
 
-    pub fn update(self) -> Conway {
-        todo!()
+    pub fn set(&mut self, row: usize, col: usize, val: bool) {
+        let index = row * self.cols + col;
+        self.cells[index] = val;
+    }
+
+    pub fn update(&self) -> Conway {
+        
+        let mut new = Conway { rows: self.rows, cols: self.cols, cells: vec![false; self.cells.len()]};
+
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let alive = self.should_live(row, col);
+                new.set(row, col, alive);
+            }
+        }
+
+
+        new
+    }
+    // RULES
+    // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+    // Any live cell with two or three live neighbours lives on to the next generation.
+    // Any live cell with more than three live neighbours dies, as if by overpopulation.
+    // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+    fn should_live(&self, row: usize, col: usize) -> bool {
+        let neighbors =  self.count_live_neighbors(row, col);
+        let was_living = self.get(row, col);
+
+        if was_living {
+            neighbors == 2 || neighbors == 3
+        } else {
+            neighbors == 3
+        }
+        
     }
 
     fn count_live_neighbors(&self, row: usize, col: usize) -> usize {
@@ -71,30 +103,13 @@ impl Conway {
             ],
         };
 
-        // loop through neighbors and count the living
-        // let mut life_count = 0;
-        // for (row, col) in neighbor_coords {
-        //     if self.get(row,col) {
-        //         life_count += 1;
-        //     }
-        // }
-        // life_count
-
         neighbor_coords
             .into_iter()
             .fold(0, |count, (row, col)| count + (self.get(row, col) as usize))
     }
 
-    fn has_no_edges(&self, row: usize, col: usize) -> bool {
-        row != 0 && row < self.rows && col != 0 && col < self.cols
-    }
-
-    fn has_one_edge(&self, row: usize, col: usize) -> bool {
-        (row == 0 || row == self.row_max()) != (col == 0 || col == self.col_max())
-    }
-
-    fn has_two_edges(&self, row: usize, col: usize) -> bool {
-        (row == 0 || row == self.row_max()) && (col == 0 || col == self.col_max())
+    pub fn all_dead(&self) -> bool {
+        self.cells.iter().all(|b| !*b)
     }
 
     fn detect_kind(&self, row: usize, col: usize) -> CellKind {
@@ -117,7 +132,35 @@ impl Conway {
     const fn row_max(&self) -> usize {
         self.rows - 1
     }
+
+
+     pub fn to_string(&self, turn: usize) -> String {
+        let mut s = String::new();
+
+        s.push_str(&format!("Current Turn: {turn}\n"));
+        s.push_str(&"=".repeat(self.cols + 2));
+        s.push('\n');
+
+        for row in 0..self.rows {
+            s.push('|');
+            for col in 0..self.cols {
+                let c = match self.get(row, col) {
+                    true => 'O',
+                    false => '.',
+                };
+                s.push(c);
+
+            }
+            s.push_str("|\n");
+        }
+
+        s.push_str(&"=".repeat(self.cols + 2));
+        s.push('\n');
+
+        s
+    }
 }
+
 
 enum CellKind {
     TopLeft, //
@@ -152,7 +195,11 @@ pub fn parse(input: &str) -> Conway {
     // Turn second string into a vec<bool>
     let cells: Vec<bool> = second
         .chars()
-        .map(|char| -> bool { char.to_digit(2).unwrap() != 0 })
+        .map(|char| -> bool { match char {
+            '.' => false,
+            'O' => true,
+            _ => panic!("unknown life form")
+        }})
         .collect();
 
     //Return a conway
@@ -167,7 +214,7 @@ pub fn parse(input: &str) -> Conway {
 mod tests {
     use super::*;
 
-    const INPUT: &'static str = "2x3\n010101";
+    const INPUT: &'static str = "2x3\n.O.O.O";
     // oxo
     // xox
     // becomes
@@ -194,10 +241,10 @@ mod tests {
         let conway = parse(INPUT);
 
         let c = conway.update();
-        assert_eq!(c, parse("2x3\n010010"));
+        assert_eq!(c, parse("2x3\n.O..O."));
 
         let c2 = c.update();
-        assert_eq!(c2, parse("2x3\n000000"));
+        assert_eq!(c2, parse("2x3\n......"));
     }
 }
 
