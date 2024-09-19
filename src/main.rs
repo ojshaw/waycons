@@ -4,7 +4,6 @@ use std::thread::sleep;
 use std::time::Duration;
 use waycons::parse;
 
-
 fn main() {
     let mut bytes = Vec::new();
     io::stdin().read_to_end(&mut bytes).unwrap();
@@ -16,10 +15,7 @@ fn main() {
         conway = conway.update();
         println!("{}", conway.to_string(turn));
 
-        
         turn += 1;
         sleep(Duration::from_millis(500));
     }
-
-
 }

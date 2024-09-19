@@ -4,6 +4,7 @@ pub struct Conway {
     pub cells: Vec<bool>,
     pub rows: usize,
     pub cols: usize,
+    border_kind: BorderKind,
 }
 
 impl Conway {
@@ -19,8 +20,12 @@ impl Conway {
     }
 
     pub fn update(&self) -> Conway {
-        
-        let mut new = Conway { rows: self.rows, cols: self.cols, cells: vec![false; self.cells.len()]};
+        let mut new = Conway {
+            rows: self.rows,
+            cols: self.cols,
+            cells: vec![false; self.cells.len()],
+            border_kind: self.border_kind,
+        };
 
         for row in 0..self.rows {
             for col in 0..self.cols {
@@ -28,7 +33,6 @@ impl Conway {
                 new.set(row, col, alive);
             }
         }
-
 
         new
     }
@@ -38,7 +42,7 @@ impl Conway {
     // Any live cell with more than three live neighbours dies, as if by overpopulation.
     // Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
     fn should_live(&self, row: usize, col: usize) -> bool {
-        let neighbors =  self.count_live_neighbors(row, col);
+        let neighbors = self.count_live_neighbors(row, col);
         let was_living = self.get(row, col);
 
         if was_living {
@@ -46,7 +50,6 @@ impl Conway {
         } else {
             neighbors == 3
         }
-        
     }
 
     fn count_live_neighbors(&self, row: usize, col: usize) -> usize {
@@ -54,6 +57,9 @@ impl Conway {
         assert!(self.cols > 0);
 
         // generating coords
+        // TODO: pattern match on self.border_kind and generate coordinates differently
+        // for wrapping games. Use our modular addition helper to get neighboring
+        // Need new test cases for wrapping games
         let neighbor_coords = match self.detect_kind(row, col) {
             CellKind::TopLeft => vec![(0, 1), (1, 1), (1, 0)],
             CellKind::Top => vec![
@@ -133,8 +139,7 @@ impl Conway {
         self.rows - 1
     }
 
-
-     pub fn to_string(&self, turn: usize) -> String {
+    pub fn to_string(&self, turn: usize) -> String {
         let mut s = String::new();
 
         s.push_str(&format!("Current Turn: {turn}\n"));
@@ -149,7 +154,6 @@ impl Conway {
                     false => '.',
                 };
                 s.push(c);
-
             }
             s.push_str("|\n");
         }
@@ -161,7 +165,6 @@ impl Conway {
     }
 }
 
-
 enum CellKind {
     TopLeft, //
     Top,
@@ -172,6 +175,13 @@ enum CellKind {
     BottomLeft,
     Left,
     Middle,
+}
+
+#[derive(Default, Debug, PartialEq, Copy, Clone)]
+enum BorderKind {
+    Wrap,
+    #[default]
+    Nonwrap,
 }
 
 pub fn parse(input: &str) -> Conway {
@@ -195,11 +205,13 @@ pub fn parse(input: &str) -> Conway {
     // Turn second string into a vec<bool>
     let cells: Vec<bool> = second
         .chars()
-        .map(|char| -> bool { match char {
-            '.' => false,
-            'O' => true,
-            _ => panic!("unknown life form")
-        }})
+        .map(|char| -> bool {
+            match char {
+                '.' => false,
+                'O' => true,
+                _ => panic!("unknown life form"),
+            }
+        })
         .collect();
 
     //Return a conway
@@ -207,8 +219,20 @@ pub fn parse(input: &str) -> Conway {
         cells: cells,
         rows: rows,
         cols: cols,
+        ..Default::default()
     }
 }
+
+
+fn mod_add(limit: isize, left: isize, to_add: isize) -> isize {
+    let raw = dbg!(left + to_add) % limit;
+    if raw < 0 {
+        raw + limit
+    } else {
+        raw
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -246,6 +270,15 @@ mod tests {
         let c2 = c.update();
         assert_eq!(c2, parse("2x3\n......"));
     }
+
+    #[test]
+    fn hours() {
+        assert_eq!(mod_add(12, 1, 12), 1);
+        assert_eq!(mod_add(12, 1, 11), 0);
+
+        assert_eq!(mod_add(12, 1, 6), 7);
+        assert_eq!(mod_add(12, 0, -1), 11);
+    }
 }
 
 // text
@@ -270,3 +303,5 @@ mod tests {
 // row|row|row
 // 3 cells per row
 //  rc = p
+
+// TODO: parse 2D grid input instead of line so it's easy to understand test inputs
