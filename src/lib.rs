@@ -1,3 +1,5 @@
+pub mod parse;
+
 #[derive(Debug, Default, PartialEq)]
 pub struct Conway {
     // what goes here?
@@ -35,6 +37,10 @@ impl Conway {
         }
 
         new
+    }
+
+    pub fn all_dead(&self) -> bool {
+        self.cells.iter().all(|b| !*b)
     }
     // RULES
     // Any live cell with fewer than two live neighbours dies, as if by underpopulation.
@@ -114,10 +120,6 @@ impl Conway {
             .fold(0, |count, (row, col)| count + (self.get(row, col) as usize))
     }
 
-    pub fn all_dead(&self) -> bool {
-        self.cells.iter().all(|b| !*b)
-    }
-
     fn detect_kind(&self, row: usize, col: usize) -> CellKind {
         match (row, col) {
             (0, 0) => CellKind::TopLeft,
@@ -184,46 +186,6 @@ enum BorderKind {
     Nonwrap,
 }
 
-pub fn parse(input: &str) -> Conway {
-    let lines = input.split('\n');
-    let lines: Vec<_> = lines.collect();
-
-    let [first, second, ..] = lines.as_slice() else {
-        panic!("Help");
-    };
-
-    let dimension_fields = first.split('x').collect::<Vec<_>>();
-    let [rows, cols, ..] = dimension_fields.as_slice() else {
-        panic!("Help")
-    };
-
-    let rows: usize = rows.parse().unwrap();
-    let cols: usize = cols.parse().unwrap();
-    assert!(rows > 0);
-    assert!(cols > 0);
-
-    // Turn second string into a vec<bool>
-    let cells: Vec<bool> = second
-        .chars()
-        .map(|char| -> bool {
-            match char {
-                '.' => false,
-                'O' => true,
-                _ => panic!("unknown life form"),
-            }
-        })
-        .collect();
-
-    //Return a conway
-    Conway {
-        cells: cells,
-        rows: rows,
-        cols: cols,
-        ..Default::default()
-    }
-}
-
-
 fn mod_add(limit: isize, left: isize, to_add: isize) -> isize {
     let raw = dbg!(left + to_add) % limit;
     if raw < 0 {
@@ -233,12 +195,12 @@ fn mod_add(limit: isize, left: isize, to_add: isize) -> isize {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use parse::parse;
 
-    const INPUT: &'static str = "2x3\n.O.O.O";
+    const INPUT: &'static str = "2x3\n.X.\nX.X";
     // oxo
     // xox
     // becomes
@@ -247,28 +209,15 @@ mod tests {
     // becomes
     // ooo
     // ooo
-
-    #[test]
-    fn parse_simple() {
-        let conway = parse(INPUT);
-
-        assert_eq!(conway.get(0, 0), false);
-        assert_eq!(conway.get(0, 1), true);
-        assert_eq!(conway.get(0, 2), false);
-        assert_eq!(conway.get(1, 0), true);
-        assert_eq!(conway.get(1, 1), false);
-        assert_eq!(conway.get(1, 2), true);
-    }
-
     #[test]
     fn step_simple() {
-        let conway = parse(INPUT);
+        let conway = parse(INPUT).unwrap();
 
         let c = conway.update();
-        assert_eq!(c, parse("2x3\n.O..O."));
+        assert_eq!(c, parse("2x3\n.X.\n.X.").unwrap());
 
         let c2 = c.update();
-        assert_eq!(c2, parse("2x3\n......"));
+        assert_eq!(c2, parse("2x3\n...\n...").unwrap());
     }
 
     #[test]
@@ -304,4 +253,9 @@ mod tests {
 // 3 cells per row
 //  rc = p
 
-// TODO: parse 2D grid input instead of line so it's easy to understand test inputs
+// TODO: Conway TUI
+// 1. accept conway input at startup (stdin)
+//      - if parsing fails, ask for new input,
+//                - repeat in a loop until killed, or parsing succeeds
+// 2. simulate conway maybe forever
+//      - check if everyone is dead, and quit if so?
