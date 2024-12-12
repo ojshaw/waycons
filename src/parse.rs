@@ -53,7 +53,7 @@ pub fn parse(input: &str) -> Option<Conway> {
             return None;
         }
         for c in line.chars() {
-            cells.push(match dbg!(c) {
+            cells.push(match c {
                 '.' => false,
                 'X' => true,
                 _ => return None,

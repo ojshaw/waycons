@@ -1,4 +1,5 @@
 pub mod parse;
+pub mod ui;
 
 #[derive(Debug, Default, PartialEq)]
 pub struct Conway {
@@ -212,7 +213,7 @@ mod tests {
     #[test]
     fn step_simple() {
         let conway = parse(INPUT).unwrap();
-
+        // Need new test cases for wrapping games
         let c = conway.update();
         assert_eq!(c, parse("2x3\n.X.\n.X.").unwrap());
 
