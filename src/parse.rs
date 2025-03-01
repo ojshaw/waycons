@@ -1,4 +1,5 @@
-    use crate::Conway;
+
+use crate::Conway;
 
 // 1. get first line
 //      - split into rows, cols
