@@ -6,5 +6,5 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-iocraft = "0.6.2"
+iocraft = "0.7"
 smol = "2.0.2"

@@ -1,10 +1,7 @@
 use iocraft::ElementExt;
 use std::io;
 use std::io::Read;
-use std::thread::sleep;
-use std::time::Duration;
-use waycons::parse::parse;
-use waycons::ui::{App, ConwayProps};
+use waycons::ui::App;
 
 fn main() {
     let mut bytes = Vec::new();

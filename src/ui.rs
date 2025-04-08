@@ -1,5 +1,4 @@
 use crate::parse::parse;
-use crate::Conway;
 use iocraft::prelude::*;
 
 #[derive(Debug, Default, Props)]
