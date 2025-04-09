@@ -1,4 +1,3 @@
-
 use crate::Conway;
 
 // 1. get first line
